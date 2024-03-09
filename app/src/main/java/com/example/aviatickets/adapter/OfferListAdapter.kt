@@ -2,6 +2,7 @@ package com.example.aviatickets.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.aviatickets.R
 import com.example.aviatickets.databinding.ItemOfferBinding
@@ -11,15 +12,20 @@ class OfferListAdapter : RecyclerView.Adapter<OfferListAdapter.ViewHolder>() {
 
     private val items: ArrayList<Offer> = arrayListOf()
 
-    fun setItems(offerList: List<Offer>) {
-        items.clear()
-        items.addAll(offerList)
-        notifyDataSetChanged()
+//    fun setItems(offerList: List<Offer>) {
+//        items.clear()
+//        items.addAll(offerList)
+//        notifyDataSetChanged()
+//    }
+    fun updateItems(newItems: List<Offer>) {
+        val diffCallback = OfferDiffCallback(this.items, newItems)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
 
-        /**
-         * think about recycler view optimization using diff.util
-         */
+        this.items.clear()
+        this.items.addAll(newItems)
+        diffResult.dispatchUpdatesTo(this)
     }
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(
@@ -49,12 +55,12 @@ class OfferListAdapter : RecyclerView.Adapter<OfferListAdapter.ViewHolder>() {
             val flight = offer.flight
 
             with(binding) {
-                departureTime.text = flight.departureTimeInfo
-                arrivalTime.text = flight.arrivalTimeInfo
+                departureTime.text = flight.departure_time_info
+                arrivalTime.text = flight.arrival_time_info
                 route.text = context.getString(
                     R.string.route_fmt,
-                    flight.departureLocation.code,
-                    flight.arrivalLocation.code
+                    flight.departure_location.code,
+                    flight.arrival_location.code
                 )
                 duration.text = context.getString(
                     R.string.time_fmt,
@@ -72,4 +78,22 @@ class OfferListAdapter : RecyclerView.Adapter<OfferListAdapter.ViewHolder>() {
         )
 
     }
+
+    class OfferDiffCallback(
+        private val oldList: List<Offer>,
+        private val newList: List<Offer>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize(): Int = oldList.size
+
+        override fun getNewListSize(): Int = newList.size
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition].id == newList[newItemPosition].id
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition] == newList[newItemPosition]
+        }
+    }
 }
+
